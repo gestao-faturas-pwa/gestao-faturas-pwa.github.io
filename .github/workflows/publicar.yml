@@ -75,7 +75,7 @@ jobs:
           a=Path('webapp/src/App.tsx').read_text()
           store=Path('webapp/src/services/storage.ts').read_text()
           assert 'seedInitialDemoData()' not in a
-          assert 'tx.oncomplete = () => resolve()' in store
+          assert 'tx.oncomplete = () => { this.scheduleAutoBackup(); resolve(); };' in store
           assert 'deletedAt' in a and 'activeFiscalYear' in a
           assert 'Lixo (' in a
           assert 'onTrashInvoice' in Path('webapp/src/components/InvoiceDetailModal.tsx').read_text()
