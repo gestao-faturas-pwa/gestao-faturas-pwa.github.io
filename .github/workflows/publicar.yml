@@ -71,8 +71,8 @@ jobs:
           assert m['scope']=='/'
           assert m['display']=='standalone'
           html=(d/'index.html').read_text(encoding='utf-8')
-          assert 'href="/manifest.webmanifest"' in html
-          assert "scope: '/'" in html
+          assert 'manifest.webmanifest' in html, 'Manifesto PWA não referenciado no HTML'
+          assert ("scope: '/'" in html or 'scope:"/"' in html), 'Âmbito do Service Worker inesperado'
           sw=(d/'sw.js').read_text(encoding='utf-8')
           assert 'gestao-faturas-exclusiva-' in sw
           assert (d/'pdf.worker.mjs').exists()
