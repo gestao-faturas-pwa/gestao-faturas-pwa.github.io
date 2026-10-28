@@ -1,0 +1,96 @@
+name: Publicar Gestão de Faturas (domínio independente)
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publicar.yml'
+      - 'scripts/preparar-pwa.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-gestao-faturas-independente
+  cancel-in-progress: true
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Obter configuração
+        uses: actions/checkout@v4
+
+      - name: Preparar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Obter pacote original fixado e confirmar integridade
+        env:
+          SOURCE_ZIP: 'https://raw.githubusercontent.com/universidadechat-ux/gestaoassinaturas/e0d9e8018a540bba9b4d9395a5632debb5588da5/gestao-faturas-site%20%281%29.zip'
+          SHA256: 'fdc311502a3689651755cc25f8b6934dc891d5af95a42e1dcdbfaff58472dac4'
+        run: |
+          curl --fail --location --retry 3 --silent --show-error "$SOURCE_ZIP" -o "$RUNNER_TEMP/source.zip"
+          echo "$SHA256  $RUNNER_TEMP/source.zip" | sha256sum --check --status
+          mkdir webapp
+          unzip -q "$RUNNER_TEMP/source.zip" -d webapp
+          test -f webapp/package.json
+          test -f webapp/public/manifest.webmanifest
+          echo "Código original obtido e validado sem ficheiros contabilísticos."
+
+      - name: Preparar identidade isolada no novo domínio
+        run: python3 scripts/preparar-pwa.py
+
+      - name: Instalar dependências
+        working-directory: webapp
+        run: npm install --no-audit --no-fund
+
+      - name: Validar TypeScript
+        working-directory: webapp
+        run: npm run lint
+
+      - name: Compilar aplicação PWA
+        working-directory: webapp
+        run: npm run build
+
+      - name: Validar manifest, OCR e privacidade
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          d=Path('webapp/dist')
+          m=json.loads((d/'manifest.webmanifest').read_text(encoding='utf-8'))
+          assert m['id']=='/gestao-faturas-assinaturas-app-v1'
+          assert m['start_url']=='/'
+          assert m['scope']=='/'
+          assert m['display']=='standalone'
+          html=(d/'index.html').read_text(encoding='utf-8')
+          assert 'href="/manifest.webmanifest"' in html
+          assert "scope: '/'" in html
+          sw=(d/'sw.js').read_text(encoding='utf-8')
+          assert 'gestao-faturas-exclusiva-' in sw
+          assert (d/'pdf.worker.mjs').exists()
+          assert (d/'tesseract/por.traineddata.gz').exists()
+          forbidden={'.pdf','.xlsx','.xls','.csv','.sqlite','.db','.zip','.env'}
+          bad=[str(p) for p in d.rglob('*') if p.is_file() and p.suffix.lower() in forbidden]
+          assert not bad, f'Ficheiros proibidos na publicação: {bad}'
+          print('PWA independente e recursos locais OK; sem documentos no site.')
+          PY
+
+      - name: Configurar GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Preparar site
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: webapp/dist
+
+      - name: Publicar domínio próprio
+        id: deployment
+        uses: actions/deploy-pages@v4
