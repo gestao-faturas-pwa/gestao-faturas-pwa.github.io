@@ -54,6 +54,26 @@ jobs:
       - name: Testar extração de fornecedores, totais e séries
         run: node --experimental-strip-types scripts/testar-correcao-leitura.mjs
 
+      - name: Aplicar proteção de dados e anos fiscais
+        run: python3 scripts/corrigir-registos-anos.py
+
+      - name: Ativar edição e gestão segura de responsáveis
+        run: python3 scripts/corrigir-edicao-responsaveis.py
+
+      - name: Verificar proteção dos registos existentes
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          a=Path('webapp/src/App.tsx').read_text()
+          store=Path('webapp/src/services/storage.ts').read_text()
+          assert 'seedInitialDemoData()' not in a
+          assert 'tx.oncomplete = () => resolve()' in store
+          assert 'deletedAt' in a and 'activeFiscalYear' in a
+          assert 'Lixo (' in a
+          assert 'onTrashInvoice' in Path('webapp/src/components/InvoiceDetailModal.tsx').read_text()
+          print('Proteção e anos validados.')
+          PY
+
       - name: Instalar dependências
         working-directory: webapp
         run: npm install --no-audit --no-fund
