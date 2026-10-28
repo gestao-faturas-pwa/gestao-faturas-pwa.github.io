@@ -48,6 +48,12 @@ jobs:
       - name: Preparar identidade isolada no novo domínio
         run: python3 scripts/preparar-pwa.py
 
+      - name: Aplicar correção conservadora da leitura
+        run: python3 scripts/aplicar-correcao-leitura.py
+
+      - name: Testar extração de fornecedores, totais e séries
+        run: node --experimental-strip-types scripts/testar-correcao-leitura.mjs
+
       - name: Instalar dependências
         working-directory: webapp
         run: npm install --no-audit --no-fund
