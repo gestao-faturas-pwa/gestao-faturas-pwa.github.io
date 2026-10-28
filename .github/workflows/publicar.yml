@@ -8,6 +8,7 @@ on:
       - 'scripts/preparar-pwa.py'
       - 'scripts/corrigir-registos-anos.py'
       - 'scripts/corrigir-edicao-responsaveis.py'
+      - 'scripts/corrigir-backup-pasta.py'
       - 'correcoes/leitura/**'
       - 'scripts/aplicar-correcao-leitura.py'
   workflow_dispatch:
@@ -64,6 +65,9 @@ jobs:
       - name: Ativar edição e gestão segura de responsáveis
         run: python3 scripts/corrigir-edicao-responsaveis.py
 
+      - name: Preparar backup em pasta autorizada
+        run: python3 scripts/corrigir-backup-pasta.py
+
       - name: Verificar proteção dos registos existentes
         run: |
           python3 - <<'PY'
@@ -75,6 +79,8 @@ jobs:
           assert 'deletedAt' in a and 'activeFiscalYear' in a
           assert 'Lixo (' in a
           assert 'onTrashInvoice' in Path('webapp/src/components/InvoiceDetailModal.tsx').read_text()
+          assert 'chooseBackupDirectory' in store
+          assert 'writeBackupToDirectory' in store
           print('Proteção e anos validados.')
           PY
 
