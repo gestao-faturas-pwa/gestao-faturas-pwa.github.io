@@ -1,4 +1,5 @@
 name: Publicar Gestão de Faturas (domínio independente)
+# Publicação exclusiva pelo Actions, sem Jekyll ou páginas do README.
 on:
   push:
     branches: [main]
