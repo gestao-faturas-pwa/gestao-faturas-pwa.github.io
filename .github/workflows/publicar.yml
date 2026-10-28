@@ -89,7 +89,7 @@ jobs:
           assert 'storage.deleteInvoice(target.id)' in a
           assert 'ESVAZIAR ' in a and 'activeFiscalYear' in a
           assert 'downloadBackupBeforePurge' in a
-          assert 'stored.deletedAt' in a and 'target.deletedAt' in a
+          assert 'stored?.deletedAt' in a and 'target.deletedAt' in a
           assert 'Eliminar definitivamente' in a and 'Esvaziar Lixo' in a
           print('Proteção e anos validados.')
           PY
