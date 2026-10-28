@@ -6,6 +6,10 @@ on:
     paths:
       - '.github/workflows/publicar.yml'
       - 'scripts/preparar-pwa.py'
+      - 'scripts/corrigir-registos-anos.py'
+      - 'scripts/corrigir-edicao-responsaveis.py'
+      - 'correcoes/leitura/**'
+      - 'scripts/aplicar-correcao-leitura.py'
   workflow_dispatch:
 
 permissions:
