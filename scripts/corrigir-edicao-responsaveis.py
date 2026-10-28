@@ -91,7 +91,7 @@ edit('components/SettingsView.tsx',settings)
 def modal(s):
     s=once(s,"  settings,\n  onClose,", "  settings,\n  signers,\n  onClose,")
     s=once(s,"import React, { useState } from 'react';",
-      "import React, { useState } from 'react';")
+      "import React, { useState, useEffect } from 'react';")
     s=once(s,"  onUpdateInvoice: (updated: InvoiceRecord) => void;",
       "  onUpdateInvoice: (updated: InvoiceRecord) => Promise<void>;\n  onTrashInvoice: (invoice: InvoiceRecord) => Promise<void>;")
     s=once(s,"  onUpdateInvoice,\n}) => {",
@@ -102,12 +102,25 @@ def modal(s):
   const [editForm, setEditForm] = useState<InvoiceRecord | null>(null);
   const [savingEdit, setSavingEdit] = useState(false);
 
+  // Evitar que o formulário anterior seja mostrado ao abrir outra fatura.
+  useEffect(() => {
+    setIsEditingRecord(false);
+    setEditForm(null);
+    setNotesValue(invoice?.notes || '');
+  }, [invoice?.id, isOpen]);
+
   const beginEdit = () => {
     if (invoice) { setEditForm({ ...invoice }); setIsEditingRecord(true); }
   };
   const saveEdit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!editForm || !invoice) return;
+    if (!editForm || !invoice || editForm.id !== invoice.id) return;
+    if (editForm.returnDate && (!editForm.deliveryDate || editForm.returnDate < editForm.deliveryDate)) {
+      window.alert('A devolução não pode anteceder a entrega.'); return;
+    }
+    if (editForm.deliveryDate && !editForm.assignedTo) {
+      window.alert('Escolha o responsável pela entrega.'); return;
+    }
     if (!editForm.documentDate || !editForm.documentNumber.trim() || !editForm.supplier.trim()
       || !Number.isFinite(editForm.amount)) {
       window.alert('Preencha data, número, fornecedor e valor válido.'); return;
