@@ -9,6 +9,7 @@ on:
       - 'scripts/corrigir-registos-anos.py'
       - 'scripts/corrigir-edicao-responsaveis.py'
       - 'scripts/corrigir-backup-pasta.py'
+      - 'scripts/corrigir-esvaziar-lixo.py'
       - 'correcoes/leitura/**'
       - 'scripts/aplicar-correcao-leitura.py'
   workflow_dispatch:
@@ -68,6 +69,9 @@ jobs:
       - name: Preparar backup em pasta autorizada
         run: python3 scripts/corrigir-backup-pasta.py
 
+      - name: Adicionar esvaziamento seguro do Lixo
+        run: python3 scripts/corrigir-esvaziar-lixo.py
+
       - name: Verificar proteção dos registos existentes
         run: |
           python3 - <<'PY'
@@ -81,6 +85,12 @@ jobs:
           assert 'onTrashInvoice' in Path('webapp/src/components/InvoiceDetailModal.tsx').read_text()
           assert 'chooseBackupDirectory' in store
           assert 'writeBackupToDirectory' in store
+          assert 'storage.deleteInvoice(stored.id)' in a
+          assert 'storage.deleteInvoice(target.id)' in a
+          assert 'ESVAZIAR ' in a and 'activeFiscalYear' in a
+          assert 'downloadBackupBeforePurge' in a
+          assert 'stored.deletedAt' in a and 'target.deletedAt' in a
+          assert 'Eliminar definitivamente' in a and 'Esvaziar Lixo' in a
           print('Proteção e anos validados.')
           PY
 
