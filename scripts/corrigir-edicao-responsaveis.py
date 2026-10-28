@@ -89,6 +89,7 @@ def settings(s):
 edit('components/SettingsView.tsx',settings)
 
 def modal(s):
+    s=once(s,"  settings,\n  onClose,", "  settings,\n  signers,\n  onClose,")
     s=once(s,"import React, { useState } from 'react';",
       "import React, { useState } from 'react';")
     s=once(s,"  onUpdateInvoice: (updated: InvoiceRecord) => void;",
